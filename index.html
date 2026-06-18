@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartRoute Optimizer - ระบบจัดเส้นทางการจัดส่งสินค้าอัจฉริยะ</title>
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin=""/>
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- Sidebar Panel -->
+    <aside class="sidebar">
+      
+      <!-- Header Area -->
+      <div class="sidebar-header">
+        <div class="logo-area">
+          <div class="logo-icon">
+            <svg viewBox="0 0 24 24">
+              <path d="M19 15v4H5v-4h14m1-2H4c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h16c.55 0 1-.45 1-1v-6c0-.55-.45-1-1-1m-5-8v4H9V5h5m1-2H8c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h8c.55 0 1-.45 1-1V4c0-.55-.45-1-1-1M7 14h2v2H7v-2m0 4h2v2H7v-2m10-4h2v2h-2v-2m0 4h2v2h-2v-2z"/>
+            </svg>
+          </div>
+          <h1 class="logo-title">SmartRoute</h1>
+        </div>
+        <p class="logo-desc">ระบบวางแผนและจัดเส้นทางส่งสินค้าอัจฉริยะ (VRP Solver)</p>
+      </div>
+
+      <nav class="tabs-nav">
+        <button class="tab-btn active" data-tab="tab-import">นำเข้าข้อมูล</button>
+        <button class="tab-btn" data-tab="tab-config">ตั้งค่ารถขนส่ง</button>
+        <button class="tab-btn" data-tab="tab-results">ผลลัพธ์เส้นทาง</button>
+        <button class="tab-btn" data-tab="tab-db-history">คลังข้อมูล & ประวัติ</button>
+      </nav>
+
+      <!-- Tabs Content -->
+      <div class="tabs-content">
+        
+        <!-- TAB 1: IMPORT & DATA -->
+        <div class="tab-pane active" id="tab-import">
+          <div class="section-title">
+            <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+            <span>นำเข้าข้อมูล Excel / CSV</span>
+          </div>
+
+          <!-- Dropzone -->
+          <div class="dropzone" id="excel-dropzone">
+            <div class="dropzone-icon">
+              <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+            </div>
+            <div class="dropzone-text">
+              <h3>ลากและวางไฟล์ Excel (.xlsx, .xls) หรือ CSV</h3>
+              <p>หรือคลิกเพื่อเลือกไฟล์จากคอมพิวเตอร์ของคุณ</p>
+            </div>
+            <input type="file" id="file-input" accept=".xlsx, .xls, .csv" style="display: none;">
+          </div>
+
+          <!-- Template Download and Demo Buttons -->
+          <div class="btn-group-row">
+            <a class="btn" id="btn-download-template" href="#" download="routing_template.xlsx" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
+              <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+              เทมเพลต Excel
+            </a>
+            <button class="btn btn-secondary" id="btn-load-sample">
+              <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+              ข้อมูลตัวอย่าง
+            </button>
+          </div>
+
+          <!-- File Info Box (Hidden by default) -->
+          <div class="file-info-box" id="file-info-box" style="display: none;">
+            <div class="file-info-icon">
+              <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            </div>
+            <div class="file-info-details">
+              <div class="file-info-name" id="file-name">filename.xlsx</div>
+              <div class="file-info-stats" id="file-stats">พบข้อมูล 0 จุดส่งสินค้า</div>
+            </div>
+            <button class="btn-remove-file" id="btn-remove-file" title="นำไฟล์ออก">
+              <svg viewBox="0 0 24 24" width="16" height="16"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+            </button>
+          </div>
+
+          <!-- Data Preview Container -->
+          <div class="card" id="preview-card" style="display: none;">
+            <div class="section-title" style="margin-bottom: 8px;">
+              <span>รายการจุดส่งสินค้าที่โหลดเข้ามา</span>
+            </div>
+            <div class="data-preview-container">
+              <table class="data-table" id="data-preview-table">
+                <thead>
+                  <tr>
+                    <th>ชื่อลูกค้า</th>
+                    <th>สายส่ง</th>
+                    <th>ที่อยู่ / รายละเอียด</th>
+                    <th>ละติจูด (Lat)</th>
+                    <th>ลองจิจูด (Lng)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Filled dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: CONFIGURATION -->
+        <div class="tab-pane" id="tab-config">
+          <div class="section-title">
+            <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+            <span>ตั้งค่าตัวแปรการเดินรถ</span>
+          </div>
+
+          <div class="card">
+            
+            <!-- Depot Configuration -->
+            <div class="form-group">
+              <label class="form-label">ตั้งค่าจุดคลังสินค้า (Depot Configuration)</label>
+              
+              <!-- Source Selection (Imported vs Custom) -->
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+                <button type="button" class="btn btn-sm btn-secondary active" id="depot-source-import" style="padding: 6px;">เลือกจากจุดจอด</button>
+                <button type="button" class="btn btn-sm btn-secondary" id="depot-source-custom" style="padding: 6px;">ระบุพิกัดเอง</button>
+              </div>
+
+              <!-- Option A: Select from Imported -->
+              <div id="depot-import-wrapper">
+                <select class="form-control" id="select-depot">
+                  <option value="default">-- เลือกจากข้อมูลที่นำเข้า --</option>
+                </select>
+              </div>
+
+              <!-- Option B: Custom Coordinates -->
+              <div id="depot-custom-wrapper" style="display: none; flex-direction: column; gap: 8px;">
+                <input type="text" class="form-control" id="custom-depot-name" placeholder="ชื่อคลังสินค้า (เช่น คลังสินค้าหลัก)" value="คลังสินค้ากำหนดเอง">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                  <div>
+                    <span style="font-size: 10px; color: var(--text-sub);">ละติจูด (Lat)</span>
+                    <input type="number" step="any" class="form-control" id="custom-depot-lat" placeholder="13.7563">
+                  </div>
+                  <div>
+                    <span style="font-size: 10px; color: var(--text-sub);">ลองจิจูด (Lng)</span>
+                    <input type="number" step="any" class="form-control" id="custom-depot-lng" placeholder="100.5018">
+                  </div>
+                </div>
+                <div style="font-size: 10px; color: var(--color-warning); text-align: center; margin-top: 4px; line-height: 1.3;">
+                  💡 *คลิกเลือกตำแหน่งบนแผนที่เพื่อระบุพิกัดได้*
+                </div>
+              </div>
+            </div>
+
+            <!-- Vehicle Count Slider -->
+            <div class="form-group">
+              <label class="form-label">
+                จำนวนยานพาหนะที่มี (คัน)
+                <span class="label-value" id="val-vehicles">3</span>
+              </label>
+              <input type="range" id="input-vehicles" min="1" max="15" value="3">
+            </div>
+
+            <!-- Capacity slider removed for capacity-free routing -->
+
+            <!-- Max Stops Slider -->
+            <div class="form-group">
+              <label class="form-label">
+                จำนวนจุดส่งสูงสุดต่อคัน (จุดจอด)
+                <span class="label-value" id="val-stops">15</span>
+              </label>
+              <input type="range" id="input-stops" min="3" max="40" value="15">
+            </div>
+
+            <!-- Vehicle Average Speed -->
+            <div class="form-group">
+              <label class="form-label" for="input-speed">ความเร็วเฉลี่ยในการขับขี่ (กม./ชม.)</label>
+              <input type="number" class="form-control" id="input-speed" value="40" min="10" max="120">
+            </div>
+
+            <!-- Service Time per stop -->
+            <div class="form-group">
+              <label class="form-label" for="input-service-time">เวลาทำงาน ณ จุดส่งแต่ละจุด (นาที)</label>
+              <input type="number" class="form-control" id="input-service-time" value="10" min="0" max="120">
+            </div>
+
+            <!-- Round Trip Toggle -->
+            <div class="form-group">
+              <div class="switch-container">
+                <span class="switch-label">กลับมายังคลังสินค้าขากลับ (Round-Trip)</span>
+                <label class="switch">
+                  <input type="checkbox" id="input-roundtrip" checked>
+                  <span class="slider-round"></span>
+                </label>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Solver Execute Button -->
+          <button class="btn btn-primary" id="btn-solve-routing" disabled style="width: 100%; padding: 14px; font-size: 14px;">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+            คำนวณและเพิ่มประสิทธิภาพเส้นทาง
+          </button>
+        </div>
+
+        <!-- TAB 3: ROUTING RESULTS -->
+        <div class="tab-pane" id="tab-results">
+          
+          <!-- Empty State -->
+          <div class="empty-state" id="results-empty-state">
+            <div class="empty-state-icon">
+              <svg viewBox="0 0 24 24"><path d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z"/></svg>
+            </div>
+            <h3>ยังไม่มีการคำนวณเส้นทาง</h3>
+            <p>กรุณานำเข้าข้อมูล Excel ในแท็บแรก แล้วกดปุ่ม "คำนวณและเพิ่มประสิทธิภาพเส้นทาง" ในแท็บที่สอง</p>
+          </div>
+
+          <!-- Active Results View (Hidden by default) -->
+          <div id="results-active-view" style="display: none; flex-direction: column; gap: 20px;">
+            
+            <!-- Statistics Dashboard Grid -->
+            <div class="stats-grid">
+              <div class="stat-card">
+                <span class="stat-label">ระยะทางเดินรถรวม</span>
+                <span class="stat-value" id="stat-total-distance">0 <span class="stat-unit">กม.</span></span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-label">เวลาทำงานรวม</span>
+                <span class="stat-value" id="stat-total-duration">0 <span class="stat-unit">ชม.</span></span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-label">รถที่ใช้งาน</span>
+                <span class="stat-value" id="stat-vehicles-used">0 / 0 <span class="stat-unit">คัน</span></span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-label">จุดส่งสินค้ารวม</span>
+                <span class="stat-value" id="stat-total-stops">0 <span class="stat-unit">จุด</span></span>
+              </div>
+            </div>
+
+            <!-- Unassigned Customers Warning (Hidden by default) -->
+            <div class="unassigned-box" id="unassigned-warning" style="display: none;">
+              <div class="unassigned-title">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                <span>ไม่สามารถจัดเส้นทางได้จำนวน <span id="unassigned-count">0</span> จุดส่ง</span>
+              </div>
+              <div class="unassigned-list" id="unassigned-list">
+                <!-- Tags filled dynamically -->
+              </div>
+              <p style="font-size: 10px; color: var(--text-muted); margin-top: 6px; line-height: 1.3;">
+                *เนื่องจากจุดส่งมีจำนวนมากกว่ากำลังการวิ่งส่งสูงสุดรวมของขบวนรถที่มี
+              </p>
+            </div>
+
+            <!-- Accordion List of Routes -->
+            <div>
+              <div class="section-title">
+                <span>รายละเอียดลำดับการขนส่งแต่ละคัน</span>
+              </div>
+              <div class="route-list" id="routes-accordion">
+                <!-- Route items filled dynamically -->
+              </div>
+            </div>
+
+            <!-- Export Buttons -->
+            <button class="btn btn-primary" id="btn-export-excel" style="width: 100%; padding: 12px;">
+              <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+              ส่งออกผลลัพธ์เป็นไฟล์ Excel (.xlsx)
+            </button>
+
+          </div>
+
+        </div>
+
+        <!-- TAB 4: DATABASE & HISTORY -->
+        <div class="tab-pane" id="tab-db-history">
+          <div class="section-title">
+            <svg viewBox="0 0 24 24"><path d="M12 2e9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5-1.5-.67-1.5-1.5zm1.5-4.5c-.83 0-1.5-.67-1.5-1.5V9c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v2c0 .83-.67 1.5-1.5 1.5z"/></svg>
+            <span>ฐานข้อมูลและประวัติการคำนวณ</span>
+          </div>
+
+          <!-- Save Current Locations Set -->
+          <div class="card" id="save-location-card" style="display: none;">
+            <div class="section-title" style="margin-bottom: 8px;">
+              <span>💾 บันทึกชุดพิกัดจุดส่งปัจจุบัน</span>
+            </div>
+            <div class="form-group">
+              <input type="text" class="form-control" id="input-save-db-name" placeholder="ตั้งชื่อกลุ่มพิกัด (เช่น ลูกค้าเขตมีนบุรี)">
+            </div>
+            <button class="btn btn-secondary" id="btn-save-current-to-db" style="width: 100%; font-size: 11px;">
+              บันทึกจุดส่งลงคลังข้อมูลเบราว์เซอร์
+            </button>
+          </div>
+
+          <!-- Saved Location Sets List -->
+          <div class="card">
+            <div class="section-title" style="margin-bottom: 8px;">
+              <span>📁 ชุดข้อมูลจุดส่งที่บันทึกไว้</span>
+            </div>
+            <div id="saved-sets-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto;">
+              <div class="empty-state" style="padding: 10px; font-size: 11px;">ไม่มีชุดพิกัดที่บันทึกไว้</div>
+            </div>
+          </div>
+
+          <!-- Saved Routing History List -->
+          <div class="card">
+            <div class="section-title" style="margin-bottom: 8px;">
+              <span>⏳ ประวัติแผนจัดสายวิ่ง (Routing History)</span>
+            </div>
+            <div id="routing-history-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto;">
+              <div class="empty-state" style="padding: 10px; font-size: 11px;">ไม่มีประวัติการคำนวณ</div>
+            </div>
+            <button class="btn btn-sm btn-secondary" id="btn-clear-all-db" style="width: 100%; margin-top: 12px; color: var(--color-danger); border-color: rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.05);">
+              🧹 ล้างประวัติและฐานข้อมูลทั้งหมด
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </aside>
+
+    <!-- Map Area Container -->
+    <main class="map-container">
+      <div id="map"></div>
+    </main>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+      <div class="spinner"></div>
+      <div class="loading-text" id="loading-text">กำลังจัดเรียงเส้นทางเดินรถและเวลาที่ดีที่สุด...</div>
+    </div>
+
+    <!-- Toast Notification Banner -->
+    <div class="notification" id="notification">
+      <svg class="notification-icon" id="notification-icon" viewBox="0 0 24 24">
+        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+      </svg>
+      <span class="notification-text" id="notification-text">ดำเนินการสำเร็จ</span>
+    </div>
+
+  </div>
+
+  <!-- SheetJS Library for Excel Parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+          crossorigin=""></script>
+
+  <!-- Dexie.js for Local In-Browser Database -->
+  <script src="https://cdn.jsdelivr.net/npm/dexie@3.2.4/dist/dexie.min.js"></script>
+
+  <!-- Application JS Code modules -->
+  <script src="sample-data.js"></script>
+  <script src="solver.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <script src="app.js" defer></script>
+
+</body>
+</html>
