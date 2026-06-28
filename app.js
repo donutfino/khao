@@ -1131,7 +1131,7 @@ if (window.Sortable && stopsList) {
   let db;
 
   function initDatabase() {
-    try {
+    // removed try block
       db = new Dexie("SmartRouteDB");
       db.version(1).stores({
         configStore: "key", // key: value สำหรับเก็บค่า config ล่าสุด
