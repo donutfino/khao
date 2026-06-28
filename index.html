@@ -97,9 +97,14 @@
               <table class="data-table" id="data-preview-table">
                 <thead>
                   <tr>
+                    <th>รหัส</th>
+                    <th>หมายเลขสั่งซื้อ</th>
+                    <th>ราคา</th>
+                    <th>เบอร์โทร</th>
+                    <th>ใบกำกับภาษี</th>
+                    <th>หมายเหตุ</th>
                     <th>ชื่อลูกค้า</th>
                     <th>สายส่ง</th>
-                    <th>ที่อยู่ / รายละเอียด</th>
                     <th>ละติจูด (Lat)</th>
                     <th>ลองจิจูด (Lng)</th>
                   </tr>
@@ -130,6 +135,7 @@
                 <button type="button" class="btn btn-sm btn-secondary active" id="depot-source-import" style="padding: 6px;">เลือกจากจุดจอด</button>
                 <button type="button" class="btn btn-sm btn-secondary" id="depot-source-custom" style="padding: 6px;">ระบุพิกัดเอง</button>
               </div>
+              <button type="button" class="btn btn-sm btn-secondary" id="btn-save-depot" style="margin-top: 8px;">💾 บันทึกตำแหน่งคลัง</button>
 
               <!-- Option A: Select from Imported -->
               <div id="depot-import-wrapper">
@@ -154,6 +160,7 @@
                 <div style="font-size: 10px; color: var(--color-warning); text-align: center; margin-top: 4px; line-height: 1.3;">
                   💡 *คลิกเลือกตำแหน่งบนแผนที่เพื่อระบุพิกัดได้*
                 </div>
+ 
               </div>
             </div>
 
@@ -269,10 +276,12 @@
             </div>
 
             <!-- Export Buttons -->
-            <button class="btn btn-primary" id="btn-export-excel" style="width: 100%; padding: 12px;">
-              <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
-              ส่งออกผลลัพธ์เป็นไฟล์ Excel (.xlsx)
-            </button>
+            <div class="btn-group-row" style="margin-top: 12px;">
+              <button class="btn btn-success" id="btn-export-excel" style="width: 100%; padding: 12px;">
+                <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+                ส่งออกผลลัพธ์เป็นไฟล์ Excel (.xlsx)
+              </button>
+            </div>
 
           </div>
 

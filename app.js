@@ -170,6 +170,12 @@ document.addEventListener('DOMContentLoaded', function() {
       const rawLat = findValueByKeys(row, ['latitude', 'lat', 'y', 'ละติจูด']);
       const rawLng = findValueByKeys(row, ['longitude', 'lng', 'lon', 'x', 'ลองจิจูด']);
       const route = findValueByKeys(row, ['route', 'vehicle', 'สาย', 'สายส่ง', 'สายส่งสินค้า']);
+      const code = findValueByKeys(row, ['code', 'รหัส', 'รหัสร้าน']);
+      const orderNumber = findValueByKeys(row, ['order_number', 'order', 'เลขที่สั่ง', 'หมายเลขสั่งซื้อ']);
+      const price = findValueByKeys(row, ['price', 'ราคา']);
+      const phone = findValueByKeys(row, ['phone', 'tel', 'เบอร์', 'เบอร์โทร', 'โทรศัพท์']);
+      const taxInvoice = findValueByKeys(row, ['tax_invoice', 'ใบกำกับภาษี', 'ใบเสร็จ']);
+      const note = findValueByKeys(row, ['note', 'หมายเหตุ', 'note']);
 
       if (rawLat !== null && rawLng !== null) {
         // ทำความสะอาดค่าพิกัด (เช่น แปลงเครื่องหมายจุลภาคเป็นจุด)
@@ -188,15 +194,25 @@ document.addEventListener('DOMContentLoaded', function() {
             lng = temp;
           }
 
-          parsed.push({
-            id: idx + 1,
-            name: name ? String(name).trim() : `จุดส่งสินค้าที่ ${idx + 1}`,
-            address: address ? String(address).trim() : `พิกัด: ${lat.toFixed(4)}, ${lng.toFixed(4)}`,
-            lat: lat,
-            lng: lng,
-            route: route ? String(route).trim() : undefined,
-            isDepot: false
-          });
+                      parsed.push({
+              id: idx + 1,
+              // Store information
+              name: name ? String(name).trim() : `จุดส่งสินค้าที่ ${idx + 1}`,
+              code: code ? String(code).trim() : '',
+              orderNumber: orderNumber ? String(orderNumber).trim() : '',
+              price: price ? String(price).trim() : '',
+              phone: phone ? String(phone).trim() : '',
+              taxInvoice: taxInvoice ? String(taxInvoice).trim() : '',
+              note: note ? String(note).trim() : '',
+              // Location information
+              address: '',
+              lat: lat,
+              lng: lng,
+              // Routing information
+              route: route ? String(route).trim() : undefined,
+              isDepot: false
+            });
+
         }
       }
     });
@@ -380,9 +396,14 @@ document.addEventListener('DOMContentLoaded', function() {
         tr.style.background = 'rgba(239, 68, 68, 0.08)';
       }
       tr.innerHTML = `
+        <td>${item.code || ''}</td>
+        <td>${item.orderNumber || ''}</td>
+        <td>${item.price || ''}</td>
+        <td>${item.phone || ''}</td>
+        <td>${item.taxInvoice || ''}</td>
+        <td>${item.note || ''}</td>
         <td title="${item.name}">${item.isDepot ? '📦 [คลัง] ' : ''}${item.name}</td>
         <td>${item.isDepot ? '-' : (item.route || '<span style="color:var(--text-muted)">จัดสรรอัตโนมัติ</span>')}</td>
-        <td title="${item.address}">${item.isDepot ? '-' : item.address}</td>
         <td>${item.lat.toFixed(4)}</td>
         <td>${item.lng.toFixed(4)}</td>
       `;
@@ -514,14 +535,12 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function initTemplateDownload() {
-    const wsData = [
-      ["Customer_Name", "Address", "Latitude", "Longitude", "Route"],
-      ["คลังสินค้าหลัก (Depot)", "ศูนย์กระจายสินค้าดินแดง กรุงเทพฯ", 13.7700, 100.5500, ""],
-      ["ร้านค้าลาดพร้าว 101", "ซอยลาดพร้าว 101 วังทองหลาง กรุงเทพฯ", 13.7954, 100.6288, "สายที่ 1"],
-      ["ห้างโลตัส บางกะปิ", "ถนนลาดพร้าว เขตบางกะปิ กรุงเทพฯ", 13.7656, 100.6430, "สายที่ 1"],
-      ["ศูนย์การค้าแฟชั่นไอส์แลนด์", "ถนนรามอินทรา เขตคันนายาว กรุงเทพฯ", 13.8248, 100.6778, "สายที่ 2"],
-      ["ลูกค้าสาขาอุดมสุข", "ถนนอุดมสุข แขวงบางนา เขตบางนา กรุงเทพฯ", 13.6781, 100.6139, "สายที่ 2"]
-    ];
+      const wsData = [
+        ["Store_Name", "Code", "Order_No", "Price", "Phone", "Tax_Invoice", "Address", "Latitude", "Longitude", "Note", "Route"],
+        ["คลังสินค้าหลัก (Depot)", "", "", "", "", "", "ศูนย์กระจายสินค้าดินแดง กรุงเทพฯ", 13.7700, 100.5500, "", ""],
+        ["ร้านค้าลาดพร้าว 101", "CODE101", "001", "1000", "0812345678", "INV001", "ซอยลาดพร้าว 101 วังทองหลาง กรุงเทพฯ", 13.7954, 100.6288, "", "สายที่ 1"],
+        ["ห้างโลตัส บางกะปิ", "LOTUS", "002", "1500", "0898765432", "INV002", "ถนนลาดพร้าว เขตบางกะปิ กรุงเทพฯ", 13.7656, 100.6430, "", "สายที่ 1"]
+      ];
 
     const ws = XLSX.utils.aoa_to_sheet(wsData);
     const wb = XLSX.utils.book_new();
@@ -850,7 +869,6 @@ if (window.Sortable && stopsList) {
 
       // เรียกดึงข้อมูล OSRM เพื่อเปลี่ยนเป็นเส้นวิ่งตามถนนจริง
       fetchOSRMRoute(straightPoints, routeLine);
-
       // วาดหมุดเรียงลำดับจุดจอดสำหรับสายส่งนี้
       route.stops.forEach(stop => {
         const markerIcon = L.divIcon({
@@ -978,6 +996,12 @@ if (window.Sortable && stopsList) {
       "คิวจอด", 
       "ชื่อสถานที่ / ลูกค้า", 
       "รายละเอียดที่อยู่สถานที่", 
+      "รหัส (Code)",
+      "เลขที่สั่งซื้อ (Order No)",
+      "ราคา (Price)",
+      "โทรศัพท์ (Phone)",
+      "ใบกำกับภาษี (Tax Invoice)",
+      "หมายเหตุ (Note)",
       "ระยะทางจากจุดก่อนหน้า (กม.)", 
       "ระยะทางสะสมรวม (กม.)", 
       "เวลาประมาณการที่จะถึง (นาทีนับจากจุดเริ่ม)"
@@ -991,6 +1015,12 @@ if (window.Sortable && stopsList) {
         "คลังเริ่มต้น",
         appState.depot.name,
         appState.depot.address,
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
         0,
         0,
         0
@@ -1002,6 +1032,12 @@ if (window.Sortable && stopsList) {
           stop.sequence,
           stop.customer.name,
           stop.customer.address,
+          stop.customer.code || "",
+          stop.customer.orderNo || "",
+          stop.customer.price || "",
+          stop.customer.phone || "",
+          stop.customer.taxInvoice || "",
+          stop.customer.note || "",
           parseFloat(stop.legDistance.toFixed(2)),
           parseFloat(stop.cumulativeDistance.toFixed(2)),
           Math.round(stop.etaOffset)
@@ -1018,6 +1054,12 @@ if (window.Sortable && stopsList) {
           "คลังขากลับ",
           appState.depot.name,
           appState.depot.address,
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
           parseFloat(returnDist.toFixed(2)),
           parseFloat(route.totalDistance.toFixed(2)),
           Math.round(totalDuration)
@@ -1035,6 +1077,12 @@ if (window.Sortable && stopsList) {
           "-",
           cust.name,
           cust.address,
+          cust.code || "",
+          cust.orderNo || "",
+          cust.price || "",
+          cust.phone || "",
+          cust.taxInvoice || "",
+          cust.note || "",
           0,
           0,
           0
@@ -1090,72 +1138,48 @@ if (window.Sortable && stopsList) {
         savedLocations: "++id, name, date, locationsCount", // เก็บบล็อกข้อมูลจุดส่งลูกค้า
         routingHistory: "++id, name, date, distance, duration, stopsCount, vehiclesCount" // เก็บคิวประวัติการจัดคิววิ่งรถ
       });
-      
-      // โหลดการตั้งค่าเก่าจาก DB และอัปเดต UI ประวัติต่างๆ
-      loadSavedConfig();
-      loadSavedSetsList();
-      loadHistoryList();
-
-      // เพิ่ม Event Handlers สำหรับปุ่มต่างๆ ในแถบ DB
-      document.getElementById('btn-save-current-to-db').addEventListener('click', saveCurrentLocationsToDB);
-      document.getElementById('btn-clear-all-db').addEventListener('click', clearAllDatabase);
-
-    } catch (err) {
-      console.warn("ไม่สามารถรัน IndexedDB ได้: ", err.message);
-    }
-  }
-
-  // โหลดค่า config เก่าจาก DB
-  async function loadSavedConfig() {
-    try {
-      const keys = ['vehicles', 'stops', 'speed', 'service-time', 'roundtrip', 'depot-source', 'custom-depot-name', 'custom-depot-lat', 'custom-depot-lng'];
-      
-      for (let key of keys) {
-        const item = await db.configStore.get(key);
-        if (item) {
-          const val = item.value;
-          if (key === 'vehicles') {
-            document.getElementById('input-vehicles').value = val;
-            document.getElementById('val-vehicles').textContent = val;
-          } else if (key === 'stops') {
-            document.getElementById('input-stops').value = val;
-            document.getElementById('val-stops').textContent = val;
-          } else if (key === 'speed') {
-            document.getElementById('input-speed').value = val;
-          } else if (key === 'service-time') {
-            document.getElementById('input-service-time').value = val;
-          } else if (key === 'roundtrip') {
-            document.getElementById('input-roundtrip').checked = (val === 'true');
-          } else if (key === 'depot-source') {
-            if (val === 'custom') {
-              document.getElementById('depot-source-custom').click();
-            } else {
-              document.getElementById('depot-source-import').click();
-            }
-          } else if (key === 'custom-depot-name') {
-            document.getElementById('custom-depot-name').value = val;
-          } else if (key === 'custom-depot-lat') {
-            document.getElementById('custom-depot-lat').value = val;
-          } else if (key === 'custom-depot-lng') {
-            document.getElementById('custom-depot-lng').value = val;
-          }
+    // New implementation: fetch data from the Express/SQLite backend
+    // 1. Load depot (expect a single record)
+    fetch('http://localhost:4000/api/depots')
+      .then(res => res.json())
+      .then(depots => {
+        if (depots.length > 0) {
+          appState.depot = depots[0];
         }
-      }
-      
-      // บังคับอัปเดต state Depot จาก config โหลดใหม่
-      updateDepotAndCustomers();
-    } catch (err) {
-      console.error("ผิดพลาดในการโหลด Config: ", err);
-    }
+        // 2. Load customers (excluding depot)
+        return fetch('http://localhost:4000/api/customers');
+      })
+      .then(res => res.json())
+      .then(customers => {
+        appState.importedData = customers;
+        // Mark first entry as depot if we didn't get one from the API
+        if (!appState.depot && appState.importedData.length > 0) {
+          appState.importedData[0].isDepot = true;
+          appState.depot = appState.importedData[0];
+        }
+        // Populate UI
+        updateDataUIs();
+      })
+      .catch(err => {
+        console.error('Failed to initialize data from backend:', err);
+        showToast('ไม่สามารถโหลดข้อมูลจากเซิร์ฟเวอร์ได้', 'error');
+      });
   }
 
-  // บันทึก Config ลง DB
+  // บันทึก Config ลง Backend
   function saveConfig(key, value) {
-    if (!db) return;
-    db.configStore.put({ key: key, value: String(value) }).catch(err => {
-      console.error("ล้มเหลวในการเซฟ config: ", err);
-    });
-  }
+      // Implementation placeholder for POST /api/config
+    }
+
+    // 💾 บันทึกตำแหน่งคลังลง Backend
+    function saveDepotToDB() {
+      // Implementation placeholder for POST /api/depots
+    }
+
+    // 📦 โหลดตำแหน่งคลังที่บันทึกไว้จาก Backend
+    function loadSavedDepot() {
+      // Implementation placeholder for GET /api/depots
+    }
 
   // ผูกตัวบันทึก Config อัตโนมัติในสไลเดอร์และช่องป้อนข้อมูล
   document.getElementById('input-vehicles').addEventListener('change', function() { saveConfig('vehicles', this.value); });
@@ -1170,99 +1194,20 @@ if (window.Sortable && stopsList) {
   if (document.getElementById('depot-source-import')) {
     document.getElementById('depot-source-import').addEventListener('click', () => saveConfig('depot-source', 'import'));
     document.getElementById('depot-source-custom').addEventListener('click', () => saveConfig('depot-source', 'custom'));
+    document.getElementById('btn-save-depot').addEventListener('click', saveDepotToDB);
   }
 
   // โหลดรายการเซฟชุดพิกัด (Locations Sets)
   async function loadSavedSetsList() {
-    if (!db) return;
-    const listContainer = document.getElementById('saved-sets-list');
-    listContainer.innerHTML = '';
-    
-    try {
-      const sets = await db.savedLocations.toArray();
-      if (sets.length === 0) {
-        listContainer.innerHTML = '<div class="empty-state" style="padding: 10px; font-size: 11px;">ไม่มีชุดพิกัดที่บันทึกไว้</div>';
-        return;
-      }
-      
-      sets.forEach(setItem => {
-        const div = document.createElement('div');
-        div.style.cssText = 'padding: 8px; display: flex; flex-direction: column; gap: 4px; background: rgba(255,255,255,0.015); border: 1px solid var(--border-glass); border-radius: 6px;';
-        
-        div.innerHTML = `
-          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px;">
-            <span style="font-size: 12px; font-weight: 600; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 170px;" title="${setItem.name}">${setItem.name}</span>
-            <span style="font-size: 9px; color: var(--text-muted);">${setItem.date.split(' ')[0]}</span>
-          </div>
-          <div style="font-size: 10px; color: var(--text-sub);">📍 มีจุดจอด ${setItem.locationsCount} จุด</div>
-          <div style="display: flex; gap: 6px; margin-top: 4px;">
-            <button class="btn btn-sm" style="flex: 1; padding: 4px;" id="btn-load-set-${setItem.id}">โหลดข้อมูล</button>
-            <button class="btn btn-sm btn-remove-file" style="padding: 4px; color: var(--color-danger);" id="btn-delete-set-${setItem.id}">ลบ</button>
-          </div>
-        `;
-        listContainer.appendChild(div);
-        
-        // ผูกคลิกโหลด
-        document.getElementById(`btn-load-set-${setItem.id}`).addEventListener('click', () => {
-          loadLocationsSetFromDB(setItem.id);
-        });
-        // ผูกคลิกลบ
-        document.getElementById(`btn-delete-set-${setItem.id}`).addEventListener('click', (e) => {
-          e.stopPropagation();
-          deleteLocationsSetFromDB(setItem.id);
-        });
-      });
-    } catch (err) {
-      console.error(err);
-    }
+    // loadSavedSetsList and loadHistoryList have been removed; data is now fetched from the backend.
   }
 
   // โหลดรายการประวัติจัดสายรถ (Routing History)
   async function loadHistoryList() {
-    if (!db) return;
-    const listContainer = document.getElementById('routing-history-list');
-    listContainer.innerHTML = '';
-    
-    try {
-      // เรียงจากประวัติใหม่สุดลงไปเก่าสุด
-      const historyItems = await db.routingHistory.reverse().toArray();
-      if (historyItems.length === 0) {
-        listContainer.innerHTML = '<div class="empty-state" style="padding: 10px; font-size: 11px;">ไม่มีประวัติการคำนวณ</div>';
-        return;
-      }
-
-      historyItems.forEach(item => {
-        const div = document.createElement('div');
-        div.style.cssText = 'padding: 8px; display: flex; flex-direction: column; gap: 4px; background: rgba(255,255,255,0.015); border: 1px solid var(--border-glass); border-radius: 6px;';
-        
-        div.innerHTML = `
-          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px;">
-            <span style="font-size: 12px; font-weight: 600; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 170px;" title="${item.name}">${item.name}</span>
-            <span style="font-size: 9px; color: var(--text-muted);">${item.date}</span>
-          </div>
-          <div style="font-size: 10px; color: var(--text-sub);">🛣️ ${item.distance} กม. | 📍 ${item.stopsCount} จุด | 🚗 ${item.vehiclesCount} สาย</div>
-          <div style="display: flex; gap: 6px; margin-top: 4px;">
-            <button class="btn btn-sm" style="flex: 1; padding: 4px;" id="btn-load-hist-${item.id}">เรียกดูแผนที่</button>
-            <button class="btn btn-sm btn-remove-file" style="padding: 4px; color: var(--color-danger);" id="btn-delete-hist-${item.id}">ลบ</button>
-          </div>
-        `;
-        listContainer.appendChild(div);
-
-        document.getElementById(`btn-load-hist-${item.id}`).addEventListener('click', () => {
-          loadHistoryItemFromDB(item.id);
-        });
-
-        document.getElementById(`btn-delete-hist-${item.id}`).addEventListener('click', (e) => {
-          e.stopPropagation();
-          deleteHistoryItemFromDB(item.id);
-        });
-      });
-    } catch (err) {
-      console.error(err);
-    }
+    // loadHistoryList implementation placeholder via GET /api/history
   }
 
-  // บันทึกกลุ่มจุดส่งปัจจุบันลง DB
+  // บันทึกกลุ่มจุดส่งปัจจุบันลง Backend
   async function saveCurrentLocationsToDB() {
     if (!appState.importedData || appState.importedData.length === 0) {
       showToast('กรุณานำเข้าหรือโหลดชุดข้อมูลก่อนเซฟ', 'error');
@@ -1271,7 +1216,6 @@ if (window.Sortable && stopsList) {
 
     const nameInput = document.getElementById('input-save-db-name').value.trim();
     const name = nameInput || `กลุ่มข้อมูล_${new Date().toLocaleDateString('th-TH')} (${appState.importedData.length} จุด)`;
-
     try {
       const setItem = {
         name: name,
